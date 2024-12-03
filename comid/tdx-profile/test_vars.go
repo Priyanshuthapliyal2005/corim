@@ -1,6 +1,9 @@
 package tdx
 
 var (
+	TestRegID = "https://intel.com"
+	TestOID   = "2.16.840.1.113741.1.2.3.4.5"
+
 	TDXPCERefValTemplate = `{
   "lang": "en-GB",
   "tag-identity": {

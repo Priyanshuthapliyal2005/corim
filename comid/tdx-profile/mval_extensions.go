@@ -11,6 +11,8 @@ import (
 	"github.com/veraison/eat"
 )
 
+//"github.com/veraison/eat"
+
 // the struct containing the extensions
 type MvalExtensions struct {
 	// a string field extension
