@@ -34,7 +34,7 @@ type teeTcbCompSvn [16][16]teeSVN
 
 type teeMiscSelect maskType
 
-type teeAtttributes maskType
+type teeAttributes maskType
 
 type teeIsvProdID []byte
 

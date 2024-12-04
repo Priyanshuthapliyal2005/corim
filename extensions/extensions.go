@@ -357,7 +357,10 @@ func (o *Extensions) GetStringMapString(name string) (map[string]string, error) 
 
 func (o *Extensions) Set(name string, value any) error {
 	if o.IMapValue == nil {
+		fmt.Printf("YOGESH: Extension NOT Found %s", name)
 		return fmt.Errorf("%w: %s", ErrExtensionNotFound, name)
+	} else {
+		fmt.Printf("\nYOGESH: Extension  Found \n%s", name)
 	}
 
 	extType := reflect.TypeOf(o.IMapValue)
