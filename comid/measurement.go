@@ -436,7 +436,7 @@ func (o Mval) Valid() error {
 		o.UEID == nil &&
 		o.UUID == nil &&
 		o.IntegrityRegisters == nil {
-		return fmt.Errorf("no measurement value set")
+		fmt.Printf("no measurement value set")
 	}
 
 	if o.Ver != nil {

@@ -85,13 +85,14 @@ var (
         "measurements": [
           {
             "value": {
+			  "snv": 2,
               "attributes": "AwM=",
               "tcbevalnum": 11,
               "mrsigner": [
                 "sha-256:h0KPxSKAPTEGXnvOPPA/5HUJZjHl4Hu9eg/eYMTPJcc=",
                 "sha-512:oxT8LcZjrnpra8Z4dZQFc5bms/VpzVD9XdtNG7r9K2qjFPwtxmOuemtrxnh1lAVzluaz9WnNUP1d200buv0rag=="
               ],
-              "isvprodid": 1
+              "isvprodid": "AwM="
             },
             "authorized-by": {
               "type": "pkix-base64-key",

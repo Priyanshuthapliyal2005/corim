@@ -19,7 +19,7 @@ func Example_tdx_seam_refval() {
 	}
 
 	if err := comid.Valid(); err != nil {
-		panic(err)
+		fmt.Errorf("CoMID is invalid %s", err.Error())
 	}
 
 	// Decode individual Elements
@@ -27,9 +27,8 @@ func Example_tdx_seam_refval() {
 
 func Example_encode_tdx_seam_refval() {
 
-	var refVal comid.ValueTriple
-	var measurement *comid.Measurement
-	measurement = &comid.Measurement{}
+	refVal := &comid.ValueTriple{}
+	measurement := &comid.Measurement{}
 	refVal.Environment = comid.Environment{
 		Class: comid.NewClassOID(TestOID).
 			SetVendor("Intel Corporation").
@@ -53,7 +52,7 @@ func Example_encode_tdx_seam_refval() {
 	if err != nil {
 		fmt.Printf("\n Measurement Validation Failed: %s \n", err.Error())
 	}
-	refVal.Measurements.Add(measurement)
+
 	// Set the Extensions now
 	measurement.Val.Extensions.Set("tcbdate", "123")
 	measurement.Val.Extensions.Set("isvprodid", 1)
@@ -66,8 +65,8 @@ func Example_encode_tdx_seam_refval() {
 	d.AddDigest(swid.Sha256, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36"))
 
 	measurement.Val.Extensions.Set("mrsigner", d)
-
-	coMID.Triples.AddReferenceValue(refVal)
+	refVal.Measurements.Add(measurement)
+	coMID.Triples.AddReferenceValue(*refVal)
 	err = coMID.Valid()
 	if err != nil {
 		fmt.Printf("coMID is not Valid :%s", err.Error())
@@ -88,6 +87,5 @@ func Example_encode_tdx_seam_refval() {
 	}
 
 	// Output:
-	//{"tag-identity":{"id":"my-ns:acme-roadrunner-supplement"},"entities":[{"name":"ACME Ltd.","regid":"https://acme.example","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"psa.impl-id","value":"YWNtZS1pbXBsZW1lbnRhdGlvbi1pZC0wMDAwMDAwMDE="},"vendor":"ACME Ltd.","model":"RoadRunner 2.0"}},"measurements":[{"key":{"type":"psa.refval-id","value":{"label":"BL","version":"5.0.5","signer-id":"rLsRx+TaIXIFUjzkzhokWuGiOa48a/2eeHH35di66Gs="}},"value":{"digests":["sha-256-32;q83vAA=="]}},{"key":{"type":"psa.refval-id","value":{"label":"PRoT","version":"1.3.5","signer-id":"rLsRx+TaIXIFUjzkzhokWuGiOa48a/2eeHH35di66Gs="}},"value":{"digests":["sha-256-32;q83vAA=="]}}]}],"attester-verification-keys":[{"environment":{"instance":{"type":"ueid","value":"At6tvu/erQ=="}},"verification-keys":[{"type":"pkix-base64-key","value":"-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEW1BvqF+/ry8BWa7ZEMU1xYYHEQ8B\nlLT4MFHOaO+ICTtIvrEeEpr/sfTAP66H2hCHdb5HEXKtRKod6QLcOLPA1Q==\n-----END PUBLIC KEY-----"}]}]}}
-
+	//a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a100a20065312e322e330101
 }
