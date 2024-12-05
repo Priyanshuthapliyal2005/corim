@@ -85,7 +85,6 @@ var (
         "measurements": [
           {
             "value": {
-			  "snv": 2,
               "attributes": "AwM=",
               "tcbevalnum": 11,
               "mrsigner": [

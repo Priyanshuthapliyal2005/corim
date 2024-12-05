@@ -15,16 +15,38 @@ import (
 )
 
 func Example_tdx_seam_refval() {
-	comid := comid.Comid{}
+	coMID := comid.Comid{}
 
-	if err := comid.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
+	if err := coMID.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
 		panic(err)
 	}
 
-	if err := comid.Valid(); err != nil {
+	if err := coMID.Valid(); err != nil {
 		fmt.Errorf("CoMID is invalid %s", err.Error())
-	}
 
+	}
+	if coMID.Triples.ReferenceValues == nil {
+		fmt.Printf("\n No Reference Value Set \n ")
+	}
+	if len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values) == 0 {
+		fmt.Printf("\n No Measurement Entries Set\n ")
+	}
+	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
+		val, err := m.Val.Extensions.Get("tcbevalnum")
+		f, ok := val.(*teeTcbEvalNum)
+		if !ok {
+			fmt.Printf("val was not pointer to teeTcbEvalNum")
+		}
+		tcbValNum := *f
+		if err != nil {
+			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
+		} else {
+			fmt.Printf(" \n tcbEvalNum is Set %d", tcbValNum)
+		}
+	}
+	// Output:
+	// a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a100a20065312e322e330101
+	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"version":{"value":"1.2.3","scheme":"multipartnumeric"}}}]}]}}
 	// Decode individual Elements
 }
 
@@ -91,7 +113,6 @@ func Example_encode_tdx_seam_refval_without_profile() {
 // In Example: Example_encode_tdx_seam_refval_with_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
 // This example is ONE WITH PROFILE
 func Example_encode_tdx_seam_refval_with_profile() {
-
 	profID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
 		fmt.Printf("Unable to get new Profile")
@@ -121,14 +142,6 @@ func Example_encode_tdx_seam_refval_with_profile() {
 			SetModel("TDXSEAM"),
 	}
 
-	// Bug: Needs Mandatory setting of a minimum of one value, apart from Extensions
-	measurement.Val.Ver = comid.NewVersion()
-	measurement.Val.Ver.SetVersion("1.2.3")
-	measurement.Val.Ver.SetScheme(1)
-	err = measurement.Val.Ver.Valid()
-	if err != nil {
-		fmt.Printf("\n Measurement Validation Failed: %s \n", err.Error())
-	}
 	setMValExtensions(measurement.Val)
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
@@ -153,7 +166,7 @@ func Example_encode_tdx_seam_refval_with_profile() {
 
 	// Output:
 	//a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a100a20065312e322e330101
-	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"version":{"value":"1.2.3","scheme":"multipartnumeric"}}}]}]}}
+	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"tcbdate":"123","isvsvn":10,"attributes":"AQE=","mrsigner":["sha-256;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXU=","sha-384;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXXkW3L1wMC1cttNjTq36X82"],"isvprodid":"AQE=","tcbevalnum":11}}]}]}}
 }
 
 // In Example: Example_encode_tdx_seam_refval_without_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
@@ -173,23 +186,15 @@ func Example_encode_tdx_seam_refval_direct() {
 		AddEntity("INTEL", &TestRegID, comid.RoleCreator, comid.RoleTagCreator, comid.RoleMaintainer)
 
 	if err := measurement.Val.RegisterExtensions(extMap); err != nil {
-		log.Fatal("could not register refval extensions")
+		log.Fatal("could not register mval extensions")
 	}
 
-	// Bug: Needs Mandatory setting of a minimum of one value, apart from Extensions
-	measurement.Val.Ver = comid.NewVersion()
-	measurement.Val.Ver.SetVersion("1.2.3")
-	measurement.Val.Ver.SetScheme(1)
-	err := measurement.Val.Ver.Valid()
-	if err != nil {
-		fmt.Printf("\n Measurement Validation Failed: %s \n", err.Error())
-	}
 	setMValExtensions(measurement.Val)
 
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
 
-	err = coMID.Valid()
+	err := coMID.Valid()
 	if err != nil {
 		fmt.Printf("coMID is not Valid :%s", err.Error())
 	}
@@ -209,8 +214,8 @@ func Example_encode_tdx_seam_refval_direct() {
 	}
 
 	// Output:
-	//a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a100a20065312e322e330101
-	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"version":{"value":"1.2.3","scheme":"multipartnumeric"}}}]}]}}
+	//a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a638476331323338480a385142010138538282015820e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d7582075830e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36385442010138550b
+	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"tcbdate":"123","isvsvn":10,"attributes":"AQE=","mrsigner":["sha-256;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXU=","sha-384;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXXkW3L1wMC1cttNjTq36X82"],"isvprodid":"AQE=","tcbevalnum":11}}]}]}}
 }
 
 func setMValExtensions(val comid.Mval) {
