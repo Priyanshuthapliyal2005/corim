@@ -7,6 +7,7 @@ import (
 
 	"github.com/veraison/corim/comid"
 	"github.com/veraison/corim/corim"
+	"github.com/veraison/corim/extensions"
 	"github.com/veraison/eat"
 )
 
@@ -37,7 +38,7 @@ type MvalExtensions struct {
 // danger with that is if the your profile ID clashes with another profile,
 // which should not happen if it a registered PEN or a URL containing a domain
 // that you own.
-/*
+
 func init() {
 	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
@@ -56,7 +57,7 @@ func init() {
 		panic(err)
 	}
 }
-*/
+
 // Now Create CoMID using extensions
 func Example_profile_marshal() {
 	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")

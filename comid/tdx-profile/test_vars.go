@@ -137,7 +137,7 @@ var (
         "measurements": [
           {
             "value": {
-              "isvprodid": 1,
+              "isvprodid": "AwM=",
               "isvsvn": 10,
               "attributes": "AwM=",
               "tcbevalnum": 11,

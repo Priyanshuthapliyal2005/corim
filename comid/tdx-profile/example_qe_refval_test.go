@@ -14,7 +14,7 @@ import (
 
 func Example_tdx_qe_refval() {
 	coMID := &comid.Comid{}
-	profileID, err := eat.NewProfile("http://intel1.com/tdx-profile1")
+	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
 		panic(err) // will not error, as the hard-coded string above is valid
 	}

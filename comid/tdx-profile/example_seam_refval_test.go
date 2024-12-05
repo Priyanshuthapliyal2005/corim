@@ -14,8 +14,19 @@ import (
 	"github.com/veraison/swid"
 )
 
+// The below one works
 func Example_tdx_seam_refval() {
-	coMID := comid.Comid{}
+	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
+	if err != nil {
+		panic(err) // will not error, as the hard-coded string above is valid
+	}
+	profile, found := corim.GetProfile(profileID)
+	if !found {
+		fmt.Printf("CoRIM Profile NOT FOUND")
+		return
+	}
+
+	coMID := profile.GetComid()
 
 	if err := coMID.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
 		panic(err)
@@ -44,10 +55,6 @@ func Example_tdx_seam_refval() {
 			fmt.Printf(" \n tcbEvalNum is Set %d", tcbValNum)
 		}
 	}
-	// Output:
-	// a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a100a20065312e322e330101
-	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"version":{"value":"1.2.3","scheme":"multipartnumeric"}}}]}]}}
-	// Decode individual Elements
 }
 
 // In Example: Example_encode_tdx_seam_refval_without_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
@@ -113,21 +120,17 @@ func Example_encode_tdx_seam_refval_without_profile() {
 // In Example: Example_encode_tdx_seam_refval_with_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
 // This example is ONE WITH PROFILE
 func Example_encode_tdx_seam_refval_with_profile() {
-	profID, err := eat.NewProfile("http://intel.com/tdx-profile")
+	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
-		fmt.Printf("Unable to get new Profile")
+		panic(err) // will not error, as the hard-coded string above is valid
 	}
-
-	extMap := extensions.NewMap().
-		Add(comid.ExtReferenceValue, &MvalExtensions{})
-	err = corim.RegisterProfile(profID, extMap)
-
-	myprofile, found := corim.GetProfile(profID)
+	profile, found := corim.GetProfile(profileID)
 	if !found {
-		fmt.Printf("Profile NOT Found")
+		fmt.Printf("CoRIM Profile NOT FOUND")
 		return
 	}
-	coMID := myprofile.GetComid()
+
+	coMID := profile.GetComid()
 	if coMID == nil {
 		fmt.Printf("\n CoMID is NIL\n")
 	}
@@ -169,8 +172,8 @@ func Example_encode_tdx_seam_refval_with_profile() {
 	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"tcbdate":"123","isvsvn":10,"attributes":"AQE=","mrsigner":["sha-256;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXU=","sha-384;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXXkW3L1wMC1cttNjTq36X82"],"isvprodid":"AQE=","tcbevalnum":11}}]}]}}
 }
 
-// In Example: Example_encode_tdx_seam_refval_without_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
-// This example is WITHOUT PROFILE
+// In Example: Example_encode_tdx_seam_refval_direct() the Extensions are set directly!
+// This example is WITHOUT PROFILE & works correctly!
 func Example_encode_tdx_seam_refval_direct() {
 	refVal := &comid.ValueTriple{}
 	measurement := &comid.Measurement{}
