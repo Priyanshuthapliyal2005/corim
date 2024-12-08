@@ -30,7 +30,7 @@ type teeTcbStatus setType
 
 type teeTcbEvalNum uint
 
-type teeTcbCompSvn [16][16]teeSVN
+type teeTcbCompSvn [16]teeSVN
 
 type teeMiscSelect maskType
 
@@ -38,7 +38,6 @@ type teeAttributes maskType
 
 type teeIsvProdID []byte
 
-// TO DO Change this Instance ID to be a type choice with expression for a []byte
 type teeInstanceID uint
 
 type teeCryptoKey comid.CryptoKey
