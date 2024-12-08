@@ -15,7 +15,7 @@ import (
 )
 
 // The below one works
-func Example_tdx_seam_refval() {
+func Example_decode_JSON() {
 	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
 		panic(err) // will not error, as the hard-coded string above is valid
@@ -43,6 +43,7 @@ func Example_tdx_seam_refval() {
 		fmt.Printf("\n No Measurement Entries Set\n ")
 	}
 	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
+		decodeMValExtensions(m)
 		val, err := m.Val.Extensions.Get("tcbevalnum")
 		f, ok := val.(*teeTcbEvalNum)
 		if !ok {
@@ -52,9 +53,81 @@ func Example_tdx_seam_refval() {
 		if err != nil {
 			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
 		} else {
-			fmt.Printf(" \n tcbEvalNum is Set %d", tcbValNum)
+			fmt.Printf(" \n TcbEvalNum: %d", tcbValNum)
 		}
 	}
+	// output:
+	// ImplementationID: 61636d652d696d706c656d656e746174696f6e2d69642d303030303030303031
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: BL
+	// Version: 2.1.0
+	// Digest: 87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: PRoT
+	// Version: 1.3.5
+	// Digest: 0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: ARoT
+	// Version: 0.1.4
+	// Digest: a3a5e715f0cc574a73c3f9bebb6bc24f32ffd5b67b387244c2c909da779a1478
+
+}
+
+func Example_decode_CBOR() {
+	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
+	if err != nil {
+		panic(err) // will not error, as the hard-coded string above is valid
+	}
+	profile, found := corim.GetProfile(profileID)
+	if !found {
+		fmt.Printf("CoRIM Profile NOT FOUND")
+		return
+	}
+
+	coMID := profile.GetComid()
+	if err := coMID.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
+		panic(err)
+	}
+
+	if err := coMID.Valid(); err != nil {
+		fmt.Errorf("CoMID is invalid %s", err.Error())
+
+	}
+	if coMID.Triples.ReferenceValues == nil {
+		fmt.Printf("\n No Reference Value Set \n ")
+	}
+	if len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values) == 0 {
+		fmt.Printf("\n No Measurement Entries Set\n ")
+	}
+	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
+		decodeMValExtensions(m)
+		val, err := m.Val.Extensions.Get("tcbevalnum")
+		f, ok := val.(*teeTcbEvalNum)
+		if !ok {
+			fmt.Printf("val was not pointer to teeTcbEvalNum")
+		}
+		tcbValNum := *f
+		if err != nil {
+			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
+		} else {
+			fmt.Printf(" \n TcbEvalNum: %d", tcbValNum)
+		}
+	}
+	// output:
+	// ImplementationID: 61636d652d696d706c656d656e746174696f6e2d69642d303030303030303031
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: BL
+	// Version: 2.1.0
+	// Digest: 87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: PRoT
+	// Version: 1.3.5
+	// Digest: 0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
+	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
+	// Label: ARoT
+	// Version: 0.1.4
+	// Digest: a3a5e715f0cc574a73c3f9bebb6bc24f32ffd5b67b387244c2c909da779a1478
+
 }
 
 // In Example: Example_encode_tdx_seam_refval_without_profile() the Extensions are NOT Encoded in CBOR AND JSON Correctly!
@@ -238,4 +311,41 @@ func setMValExtensions(val comid.Mval) {
 	d.AddDigest(swid.Sha384, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36"))
 
 	val.Extensions.Set("mrsigner", d)
+}
+
+func decodeMValExtensions(m comid.Measurement) error {
+	val, err := m.Val.Extensions.Get("tcbevalnum")
+	if err != nil {
+		return fmt.Errorf("failed to decode tcbevalnum from measurement extensions")
+	}
+	f, ok := val.(*teeTcbEvalNum)
+	if !ok {
+		fmt.Printf("val was not pointer to teeTcbEvalNum")
+	}
+	tcbValNum := *f
+	fmt.Printf(" \n tcbEvalNum: %d", tcbValNum)
+
+	val, err = m.Val.Extensions.Get("isvprodid")
+	if err != nil {
+		return fmt.Errorf("failed to decode isvprodid from measurement extensions")
+	}
+	tS, ok := val.(*teeIsvProdID)
+	if !ok {
+		fmt.Printf("val was not pointer to teeIsvProdID")
+	}
+
+	fmt.Printf(" \n IsvProdID: %d", *tS)
+
+	val, err = m.Val.Extensions.Get("isvsvn")
+	if err != nil {
+		return fmt.Errorf("failed to decode isvsvn from measurement extensions")
+	}
+	tSV, ok := val.(*teeSVN)
+	if !ok {
+		fmt.Printf("val was not pointer to tee svn")
+	}
+
+	fmt.Printf(" \n ISVSVN: %d", *tSV)
+
+	return nil
 }
