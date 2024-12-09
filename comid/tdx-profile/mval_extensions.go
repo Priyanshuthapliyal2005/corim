@@ -13,7 +13,8 @@ import (
 
 //"github.com/veraison/eat"
 
-// the struct containing the extensions
+// MvalExtensions contains the Intel TDX profile extensions which can appear in
+// both Reference Values and Endorsed Values
 type MvalExtensions struct {
 	// a string field extension
 	TcbDate     *tdate         `cbor:"-72,keyasint,omitempty" json:"tcbdate,omitempty"`

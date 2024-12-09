@@ -436,8 +436,9 @@ func (o Mval) Valid() error {
 		o.UEID == nil &&
 		o.UUID == nil &&
 		o.IntegrityRegisters == nil &&
+		// Check for Value as well, need an API to add something
 		!o.HaveExtensions() {
-		return fmt.Errorf("YOGESH: L440 no measurement value set")
+		return fmt.Errorf("no measurement value set")
 	}
 
 	if o.Ver != nil {
