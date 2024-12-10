@@ -72,12 +72,15 @@ func Example_encode_tdx_seam_refval_without_profile() {
 
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
-	coMID.RegisterExtensions(extMap)
+	err := coMID.RegisterExtensions(extMap)
+	if err != nil {
+		panic(err)
+	}
 	// fmt.Printf("len of Measurements = %d ", len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values))
 	// Set the Extensions now
 	// setMValExtensions(&measurement.Val) ==> this does not work, though
 	setMValExtensions(&coMID.Triples.ReferenceValues.Values[0].Measurements.Values[0].Val)
-	err := coMID.Valid()
+	err = coMID.Valid()
 	if err != nil {
 		fmt.Printf("coMID is not Valid :%s", err.Error())
 	}
@@ -173,7 +176,9 @@ func Example_encode_tdx_seam_refval_direct() {
 		log.Fatal("could not register mval extensions")
 	}
 
-	setMValExtensions(&measurement.Val)
+	if err := setMValExtensions(&measurement.Val); err != nil {
+		log.Fatal("could not set mval extensions")
+	}
 
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
@@ -202,23 +207,40 @@ func Example_encode_tdx_seam_refval_direct() {
 	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"tcbdate":"123","isvsvn":10,"attributes":"AQE=","mrsigner":["sha-256;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXU=","sha-384;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXXkW3L1wMC1cttNjTq36X82"],"isvprodid":"AQE=","tcbevalnum":11}}]}]}}
 }
 
-func setMValExtensions(val *comid.Mval) {
+func setMValExtensions(val *comid.Mval) error {
 	tcbDate := tdate("123")
 	isvProdID := teeIsvProdID([]byte{0x01, 0x01})
 	svn := teeSVN(10)
 	teeTcbEvalNum := teeTcbEvalNum(11)
 	teeAttr := teeAttributes([]byte{0x01, 0x01})
-	val.Extensions.Set("tcbdate", &tcbDate)
-	val.Extensions.Extensions.Set("isvprodid", &isvProdID)
-	val.Extensions.Extensions.Set("isvsvn", &svn)
-	val.Extensions.Extensions.Set("tcbevalnum", &teeTcbEvalNum)
-	val.Extensions.Extensions.Set("attributes", &teeAttr)
+
+	err := val.Extensions.Set("tcbdate", &tcbDate)
+	if err != nil {
+		return fmt.Errorf("unable to set tcbDate %w", err)
+	}
+	err = val.Extensions.Extensions.Set("isvprodid", &isvProdID)
+	if err != nil {
+		return fmt.Errorf("unable to set isvprodid %w", err)
+	}
+	err = val.Extensions.Extensions.Set("isvsvn", &svn)
+	if err != nil {
+		return fmt.Errorf("unable to set isvsvn %w", err)
+	}
+	err = val.Extensions.Extensions.Set("tcbevalnum", &teeTcbEvalNum)
+	if err != nil {
+		return fmt.Errorf("unable to set tcbevalnum %w", err)
+	}
+	err = val.Extensions.Extensions.Set("attributes", &teeAttr)
+	if err != nil {
+		return fmt.Errorf("unable to set attributes %w", err)
+	}
 
 	d := comid.NewDigests()
 	d.AddDigest(swid.Sha256, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75"))
 	d.AddDigest(swid.Sha384, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36"))
 
 	val.Extensions.Set("mrsigner", d)
+	return nil
 }
 
 func decodeMValExtensions(m comid.Measurement) error {
