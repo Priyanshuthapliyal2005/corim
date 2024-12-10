@@ -15,7 +15,7 @@ import (
 	"github.com/veraison/swid"
 )
 
-// The below one works
+// Example_decode_JSON decodes the TDX Measurement Extensions from the given JSON Template
 func Example_decode_JSON() {
 	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
 	if err != nil {
@@ -28,93 +28,30 @@ func Example_decode_JSON() {
 	}
 
 	coMID := profile.GetComid()
-
 	if err := coMID.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
 		panic(err)
 	}
 
 	if err := coMID.Valid(); err != nil {
 		fmt.Errorf("CoMID is invalid %s", err.Error())
-
-	}
-	if coMID.Triples.ReferenceValues == nil {
-		fmt.Printf("\n No Reference Value Set \n ")
-	}
-	if len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values) == 0 {
-		fmt.Printf("\n No Measurement Entries Set\n ")
-	}
-	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
-		decodeMValExtensions(m)
-		val, err := m.Val.Extensions.Get("tcbevalnum")
-		f, ok := val.(*teeTcbEvalNum)
-		if !ok {
-			fmt.Printf("val was not pointer to teeTcbEvalNum")
-		}
-		tcbValNum := *f
-		if err != nil {
-			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
-		} else {
-			fmt.Printf(" \n TcbEvalNum: %d", tcbValNum)
-		}
 	}
 
-}
-
-func Example_decode_JSON1() {
-	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
-	if err != nil {
-		panic(err) // will not error, as the hard-coded string above is valid
-	}
-	profile, found := corim.GetProfile(profileID)
-	if !found {
-		fmt.Printf("CoRIM Profile NOT FOUND")
-		return
-	}
-
-	coMID := profile.GetComid()
-	if err := coMID.FromJSON([]byte(TDXSeamRefValJSONTemplate)); err != nil {
+	if err := extractRefVals(coMID); err != nil {
 		panic(err)
 	}
 
-	if err := coMID.Valid(); err != nil {
-		fmt.Errorf("CoMID is invalid %s", err.Error())
-
-	}
-	if coMID.Triples.ReferenceValues == nil {
-		fmt.Printf("\n No Reference Value Set \n ")
-	}
-	if len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values) == 0 {
-		fmt.Printf("\n No Measurement Entries Set\n ")
-	}
-	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
-		decodeMValExtensions(m)
-		val, err := m.Val.Extensions.Get("tcbevalnum")
-		f, ok := val.(*teeTcbEvalNum)
-		if !ok {
-			fmt.Printf("val was not pointer to teeTcbEvalNum")
-		}
-		tcbValNum := *f
-		if err != nil {
-			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
-		} else {
-			fmt.Printf(" \n TcbEvalNum: %d", tcbValNum)
-		}
-	}
 	// output:
-	// ImplementationID: 61636d652d696d706c656d656e746174696f6e2d69642d303030303030303031
-	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
-	// Label: BL
-	// Version: 2.1.0
-	// Digest: 87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7
-	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
-	// Label: PRoT
-	// Version: 1.3.5
-	// Digest: 0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
-	// SignerID: acbb11c7e4da217205523ce4ce1a245ae1a239ae3c6bfd9e7871f7e5d8bae86b
-	// Label: ARoT
-	// Version: 0.1.4
-	// Digest: a3a5e715f0cc574a73c3f9bebb6bc24f32ffd5b67b387244c2c909da779a1478
-
+	// OID: 2.16.840.1.113741.1.2.3.4.5
+	// Vendor: Intel Corporation
+	// Model: TDX SEAM
+	// tcbEvalNum: 11
+	// IsvProdID: 0303
+	// ISVSVN: 10
+	// Attributes: f00a0b
+	// Digest Alg: 1
+	// Digest Value: 87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7
+	// Digest Alg: 8
+	// Digest Value: a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6aa314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a
 }
 
 func Example_encode_tdx_seam_refval_without_profile() {
@@ -294,7 +231,7 @@ func decodeMValExtensions(m comid.Measurement) error {
 		fmt.Printf("val was not pointer to teeTcbEvalNum")
 	}
 	tcbValNum := *f
-	fmt.Printf(" \n tcbEvalNum: %d", tcbValNum)
+	fmt.Printf("tcbEvalNum: %d", tcbValNum)
 
 	val, err = m.Val.Extensions.Get("isvprodid")
 	if err != nil {
@@ -305,7 +242,7 @@ func decodeMValExtensions(m comid.Measurement) error {
 		fmt.Printf("val was not pointer to teeIsvProdID")
 	}
 
-	fmt.Printf(" \n IsvProdID: %d", *tS)
+	fmt.Printf("\nIsvProdID: %x", *tS)
 
 	val, err = m.Val.Extensions.Get("isvsvn")
 	if err != nil {
@@ -316,8 +253,32 @@ func decodeMValExtensions(m comid.Measurement) error {
 		fmt.Printf("val was not pointer to tee svn")
 	}
 
-	fmt.Printf(" \n ISVSVN: %d", *tSV)
+	fmt.Printf("\nISVSVN: %d", *tSV)
 
+	val, err = m.Val.Extensions.Get("isvprodid")
+	if err != nil {
+		return fmt.Errorf("failed to decode isvprodid from measurement extensions")
+	}
+
+	val, err = m.Val.Extensions.Get("attributes")
+	tA, ok := val.(*teeAttributes)
+	if !ok {
+		fmt.Printf("val was not pointer to teeAttributes")
+	}
+
+	fmt.Printf("\nAttributes: %x\n", *tA)
+
+	val, err = m.Val.Extensions.Get("mrsigner")
+	if err != nil {
+		return fmt.Errorf("failed to decode mrsigner from measurement extensions")
+	}
+
+	tD, ok := val.(*teeDigest)
+	if !ok {
+		fmt.Printf("val was not pointer to teeDigest")
+	}
+
+	extractTEEDigest(tD)
 	return nil
 }
 
@@ -370,4 +331,92 @@ func Example_decode_CBOR() {
 		}
 	}
 	// Output: OK
+}
+
+func extractRefVals(c *comid.Comid) error {
+	if c.Triples.ReferenceValues == nil {
+		return fmt.Errorf("no reference values triples")
+	}
+
+	for i, rv := range c.Triples.ReferenceValues.Values {
+		if err := extractTDXRefVal(rv); err != nil {
+			return fmt.Errorf("bad PSA reference value at index %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func extractTDXRefVal(rv comid.ValueTriple) error {
+	class := rv.Environment.Class
+
+	if err := extractClassElements(class); err != nil {
+		return fmt.Errorf("extracting class: %w", err)
+	}
+
+	measurements := rv.Measurements
+	if err := extractSeamMeasurements(measurements); err != nil {
+		return fmt.Errorf("extracting measurements: %w", err)
+	}
+
+	return nil
+}
+
+func extractSeamMeasurements(m comid.Measurements) error {
+	if len(m.Values) == 0 {
+		return fmt.Errorf("no measurements")
+	}
+	for i, m := range m.Values {
+		if err := decodeMValExtensions(m); err != nil {
+			return fmt.Errorf("extracting measurement at index %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
+func extractClassElements(c *comid.Class) error {
+	if c == nil {
+		return fmt.Errorf("no class")
+	}
+
+	classID := c.ClassID
+
+	if classID == nil {
+		return fmt.Errorf("no class-id")
+	}
+
+	if classID.Type() != comid.OIDType {
+		return fmt.Errorf("class id is not an oid")
+	}
+
+	fmt.Printf("OID: %s\n", classID.Value.String())
+
+	if c.Vendor == nil {
+		return fmt.Errorf("no Vendor")
+	}
+	fmt.Printf("Vendor: %s\n", *c.Vendor)
+
+	if c.Model == nil {
+		return fmt.Errorf("no Model")
+	}
+	fmt.Printf("Model: %s\n", *c.Model)
+
+	return nil
+}
+
+func extractTEEDigest(d *teeDigest) error {
+	if d == nil {
+		return fmt.Errorf("no TEE digest")
+	}
+
+	if len(*d) != 2 {
+		return fmt.Errorf("need exactly two digest")
+	}
+
+	for _, digest := range *d {
+		fmt.Printf("Digest Alg: %d\n", digest.HashAlgID)
+		fmt.Printf("Digest Value: %x\n", digest.HashValue)
+	}
+
+	return nil
 }

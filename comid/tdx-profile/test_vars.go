@@ -139,7 +139,7 @@ var (
             "value": {
               "isvprodid": "AwM=",
               "isvsvn": 10,
-              "attributes": "AwM=",
+              "attributes": "8AoL",
               "tcbevalnum": 11,
               "mrsigner": [
                 "sha-256:h0KPxSKAPTEGXnvOPPA/5HUJZjHl4Hu9eg/eYMTPJcc=",
