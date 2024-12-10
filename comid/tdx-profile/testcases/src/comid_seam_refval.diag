@@ -29,6 +29,10 @@
                 [
                 / alg-id / 1, / sha256 /
                 / digest / h'A314FC2DC663AE7A6B6BC6787594057396E6B3F569CD50FD5DDB4D1BBAFD2B6A'
+                ],
+                [
+                / alg-id / 8, / sha384 /
+                / digest / h'a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6aa314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a'
                 ]
               ],
               /comid.tcbevalnum / -86 : 11

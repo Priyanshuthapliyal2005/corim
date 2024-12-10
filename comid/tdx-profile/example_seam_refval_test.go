@@ -151,7 +151,7 @@ func Example_encode_tdx_seam_refval_with_profile() {
 	}
 
 	// Output:
-	//726174696f6e02675444585345414d81a101a638476331323338480a385142010138538282015820e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d7582075830e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36385442010138550b
+	// a301a1005043bbe37f2e614b33aed353cff1428b200281a30065494e54454c01d8207168747470733a2f2f696e74656c2e636f6d028301000204a1008182a100a300d86f4c6086480186f84d01020304050171496e74656c20436f72706f726174696f6e02675444585345414d81a101a638476331323338480a385142010138538282015820e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d7582075830e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36385442010138550b
 	// {"tag-identity":{"id":"43bbe37f-2e61-4b33-aed3-53cff1428b20"},"entities":[{"name":"INTEL","regid":"https://intel.com","roles":["creator","tagCreator","maintainer"]}],"triples":{"reference-values":[{"environment":{"class":{"id":{"type":"oid","value":"2.16.840.1.113741.1.2.3.4.5"},"vendor":"Intel Corporation","model":"TDXSEAM"}},"measurements":[{"value":{"tcbdate":"123","isvsvn":10,"attributes":"AQE=","mrsigner":["sha-256;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXU=","sha-384;5Fty9cDAtXLbTY06t+l/No/3TmI0eoJN7LZ6hOUiTXXkW3L1wMC1cttNjTq36X82"],"isvprodid":"AQE=","tcbevalnum":11}}]}]}}
 }
 
@@ -310,27 +310,22 @@ func Example_decode_CBOR() {
 		fmt.Errorf("CoMID is invalid %s", err.Error())
 
 	}
-	if coMID.Triples.ReferenceValues == nil {
-		fmt.Printf("\n No Reference Value Set \n ")
+	if err := extractRefVals(coMID); err != nil {
+		panic(err)
 	}
-	if len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values) == 0 {
-		fmt.Printf("\n No Measurement Entries Set\n ")
-	}
-	for _, m := range coMID.Triples.ReferenceValues.Values[0].Measurements.Values {
-		decodeMValExtensions(m)
-		val, err := m.Val.Extensions.Get("tcbevalnum")
-		f, ok := val.(*teeTcbEvalNum)
-		if !ok {
-			fmt.Printf("val was not pointer to teeTcbEvalNum")
-		}
-		tcbValNum := *f
-		if err != nil {
-			fmt.Printf(" \n tcbEvalNum NOT Set: %s \n", err.Error())
-		} else {
-			fmt.Printf(" \n TcbEvalNum: %d", tcbValNum)
-		}
-	}
-	// Output: OK
+
+	// output:
+	// OID: 2.16.840.1.113741.1.2.3.4.3
+	// Vendor: Intel Corporation
+	// Model: TDX SEAM
+	// tcbEvalNum: 11
+	// IsvProdID: 0102
+	// ISVSVN: 6
+	// Attributes: 0102
+	// Digest Alg: 1
+	// Digest Value: a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a
+	// Digest Alg: 8
+	// Digest Value: a314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6aa314fc2dc663ae7a6b6bc6787594057396e6b3f569cd50fd5ddb4d1bbafd2b6a
 }
 
 func extractRefVals(c *comid.Comid) error {
