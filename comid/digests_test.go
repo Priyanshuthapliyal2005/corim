@@ -76,23 +76,18 @@ func TestDigests_AddDigest_OK(t *testing.T) {
 		assert.Nil(t, d.Valid())
 	}
 }
-
 func TestDigests_Valid_empty(t *testing.T) {
 	d := NewDigests()
 	require.NotNil(t, d)
 
 	// simulate evil CBOR
 	*d = append(*d, swid.HashEntry{
-		HashAlgID: swid.Sha384,
-		HashValue: MustHexDecode(t, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36"),
+		HashAlgID: 666,
+		HashValue: []byte{0x66, 0x66, 0x06},
 	})
 
 	assert.EqualError(t, d.Valid(), "digest at index 0: unknown hash algorithm 666")
-	actual, _ := json.Marshal(d)
-
-	fmt.Printf("JSON: %s", actual)
 }
-
 func TestDigests_AddDigest_unknown_algo(t *testing.T) {
 	d := NewDigests()
 	require.NotNil(t, d)
