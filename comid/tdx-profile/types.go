@@ -4,9 +4,6 @@ import "github.com/veraison/corim/comid"
 
 type numericType uint
 
-type teeModel string
-type teeVendor string
-
 type pceID string
 
 type teeSVN numericType

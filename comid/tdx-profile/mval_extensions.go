@@ -1,10 +1,6 @@
 package tdx
 
 import (
-	"encoding/hex"
-	"fmt"
-	"log"
-
 	"github.com/veraison/corim/comid"
 	"github.com/veraison/corim/corim"
 	"github.com/veraison/corim/extensions"
@@ -46,8 +42,6 @@ func init() {
 		panic(err) // will not error, as the hard-coded string above is valid
 	}
 
-	// DO WE HAVE TO HAVE ALL EXTENSIONS UNDER ONE MAP OR I CAN REPEAT THE SAME STATEMENT
-	// UNDER TWo extMap statements and call RegisterProfile twice?
 	extMap := extensions.NewMap().
 		Add(comid.ExtReferenceValue, &MvalExtensions{}).
 		Add(comid.ExtEndorsedValue, &MvalExtensions{})
@@ -57,33 +51,4 @@ func init() {
 		// correctly set up the extensions Map above
 		panic(err)
 	}
-}
-
-// Now Create CoMID using extensions
-func Example_profile_marshal() {
-	profileID, err := eat.NewProfile("http://intel.com/tdx-profile")
-	if err != nil {
-		panic(err)
-	}
-
-	profile, ok := corim.GetProfile(profileID)
-	if !ok {
-		log.Fatalf("profile %v not found", profileID)
-	}
-	myCorim := profile.GetUnsignedCorim()
-	myComid := profile.GetComid().SetLanguage("english")
-	var refVal comid.ValueTriple
-	refVal.Measurements.Values[0].Val.Extensions.Set("tcbdate", "123")
-
-	myComid.Triples.ReferenceValues.Add(&refVal)
-
-	myCorim.AddComid(*myComid)
-
-	buf, err := myCorim.ToCBOR()
-	if err != nil {
-		log.Fatalf("could not encode CoRIM: %v", err)
-	}
-
-	fmt.Printf("corim: %v", hex.EncodeToString(buf))
-
 }

@@ -33,7 +33,7 @@ func Example_decode_JSON() {
 	}
 
 	if err := coMID.Valid(); err != nil {
-		fmt.Errorf("CoMID is invalid %s", err.Error())
+		panic(err)
 	}
 
 	if err := extractRefVals(coMID); err != nil {
@@ -72,31 +72,29 @@ func Example_encode_tdx_seam_refval_without_profile() {
 
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
-	err := coMID.RegisterExtensions(extMap)
-	if err != nil {
+	if err := coMID.RegisterExtensions(extMap); err != nil {
 		panic(err)
 	}
-	// fmt.Printf("len of Measurements = %d ", len(coMID.Triples.ReferenceValues.Values[0].Measurements.Values))
-	// Set the Extensions now
-	// setMValExtensions(&measurement.Val) ==> this does not work, though
-	setMValExtensions(&coMID.Triples.ReferenceValues.Values[0].Measurements.Values[0].Val)
-	err = coMID.Valid()
-	if err != nil {
-		fmt.Printf("coMID is not Valid :%s", err.Error())
+
+	if err := setMValExtensions(&coMID.Triples.ReferenceValues.Values[0].Measurements.Values[0].Val); err != nil {
+		panic(err)
+	}
+	if err := coMID.Valid(); err != nil {
+		panic(err)
 	}
 
 	cbor, err := coMID.ToCBOR()
 	if err == nil {
 		fmt.Printf("%x\n", cbor)
 	} else {
-		fmt.Printf("\n To CBOR Failed: %s \n", err.Error())
+		fmt.Printf("To CBOR failed \n")
 	}
 
 	json, err := coMID.ToJSON()
 	if err == nil {
 		fmt.Printf("%s\n", string(json))
 	} else {
-		fmt.Printf("\n To JSON Failed \n")
+		fmt.Printf("To JSON failed \n")
 	}
 
 	// Output:
@@ -117,7 +115,7 @@ func Example_encode_tdx_seam_refval_with_profile() {
 
 	coMID := profile.GetComid()
 	if coMID == nil {
-		fmt.Printf("\n CoMID is NIL\n")
+		panic(err)
 	}
 	coMID.SetTagIdentity("43BBE37F-2E61-4B33-AED3-53CFF1428B20", 0).
 		AddEntity("INTEL", &TestRegID, comid.RoleCreator, comid.RoleTagCreator, comid.RoleMaintainer)
@@ -133,7 +131,11 @@ func Example_encode_tdx_seam_refval_with_profile() {
 	refVal.Measurements.Add(measurement)
 	coMID.Triples.AddReferenceValue(*refVal)
 
-	setMValExtensions(&coMID.Triples.ReferenceValues.Values[0].Measurements.Values[0].Val)
+	err = setMValExtensions(&coMID.Triples.ReferenceValues.Values[0].Measurements.Values[0].Val)
+	if err != nil {
+		fmt.Printf("unable to set extensions :%s", err.Error())
+	}
+
 	err = coMID.Valid()
 	if err != nil {
 		fmt.Printf("coMID is not Valid :%s", err.Error())
@@ -211,7 +213,7 @@ func setMValExtensions(val *comid.Mval) error {
 	tcbDate := tdate("123")
 	isvProdID := teeIsvProdID([]byte{0x01, 0x01})
 	svn := teeSVN(10)
-	teeTcbEvalNum := teeTcbEvalNum(11)
+	teeTcbEvNum := teeTcbEvalNum(11)
 	teeAttr := teeAttributes([]byte{0x01, 0x01})
 
 	err := val.Extensions.Set("tcbdate", &tcbDate)
@@ -226,7 +228,7 @@ func setMValExtensions(val *comid.Mval) error {
 	if err != nil {
 		return fmt.Errorf("unable to set isvsvn %w", err)
 	}
-	err = val.Extensions.Extensions.Set("tcbevalnum", &teeTcbEvalNum)
+	err = val.Extensions.Extensions.Set("tcbevalnum", &teeTcbEvNum)
 	if err != nil {
 		return fmt.Errorf("unable to set tcbevalnum %w", err)
 	}
@@ -239,7 +241,10 @@ func setMValExtensions(val *comid.Mval) error {
 	d.AddDigest(swid.Sha256, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75"))
 	d.AddDigest(swid.Sha384, comid.MustHexDecode(nil, "e45b72f5c0c0b572db4d8d3ab7e97f368ff74e62347a824decb67a84e5224d75e45b72f5c0c0b572db4d8d3ab7e97f36"))
 
-	val.Extensions.Set("mrsigner", d)
+	err = val.Extensions.Set("mrsigner", d)
+	if err != nil {
+		return fmt.Errorf("unable to set mrsigner %w", err)
+	}
 	return nil
 }
 
@@ -277,12 +282,11 @@ func decodeMValExtensions(m comid.Measurement) error {
 
 	fmt.Printf("\nISVSVN: %d", *tSV)
 
-	val, err = m.Val.Extensions.Get("isvprodid")
+	val, err = m.Val.Extensions.Get("attributes")
 	if err != nil {
-		return fmt.Errorf("failed to decode isvprodid from measurement extensions")
+		return fmt.Errorf("failed to decode attributes from measurement extensions")
 	}
 
-	val, err = m.Val.Extensions.Get("attributes")
 	tA, ok := val.(*teeAttributes)
 	if !ok {
 		fmt.Printf("val was not pointer to teeAttributes")
@@ -300,7 +304,10 @@ func decodeMValExtensions(m comid.Measurement) error {
 		fmt.Printf("val was not pointer to teeDigest")
 	}
 
-	extractTEEDigest(tD)
+	err = extractTEEDigest(tD)
+	if err != nil {
+		return fmt.Errorf("unable to extract TEE Digest: %w", err)
+	}
 	return nil
 }
 
@@ -329,9 +336,9 @@ func Example_decode_CBOR() {
 		panic(err)
 	}
 	if err := coMID.Valid(); err != nil {
-		fmt.Errorf("CoMID is invalid %s", err.Error())
-
+		panic(err)
 	}
+
 	if err := extractRefVals(coMID); err != nil {
 		panic(err)
 	}
